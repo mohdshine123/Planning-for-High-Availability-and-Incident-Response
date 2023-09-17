@@ -11,15 +11,48 @@
 # }
 
 
+resource "aws_db_subnet_group" "udacity_db_subnet_group" {
+  name       = "udacity_db_subnet_group"
+  subnet_ids = module.vpc.public_subnets
+
+  tags = {
+    Name = "udacity_db_subnet_group"
+  }
+}
+
+resource "aws_security_group" "rds_sg1" {
+  name   = "education_rds1"
+  vpc_id = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "education_rds1"
+  }
+}
+
 resource "aws_rds_cluster_parameter_group" "cluster_pg" {
   name   = "udacity-pg-p"
-  family = "aurora5.6"
+  #family = "aurora-postgresql15"
+  family ="aurora-mysql5.7"
 
   parameter {
     name  = "binlog_format"    
     value = "MIXED"
     apply_method = "pending-reboot"
-  }
+ }
 
   parameter {
     name = "log_bin_trust_function_creators"
@@ -28,58 +61,59 @@ resource "aws_rds_cluster_parameter_group" "cluster_pg" {
   }
 }
 
-resource "aws_db_subnet_group" "udacity_db_subnet_group" {
-  name       = "udacity_db_subnet_group"
-  subnet_ids = var.private_subnet_ids
 
+resource "aws_db_parameter_group" "education" {
+  name   = "education"
+ # family = "es15"
+  family ="aurora-mysql5.7"
+
+  #parameter {
+   # name  = "log_connections"
+   # value = "1"
+ # }
 }
+
 resource "aws_rds_cluster" "udacity_cluster" {
   cluster_identifier       = "udacity-db-cluster"
-  availability_zones       = ["us-east-2a", "us-east-2b"]
+  #availability_zones       = ["us-east-2a", "us-east-2b", "us-east-2c"]
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.cluster_pg.name
   database_name            = "udacityc2"
   master_username          = "udacity"
   master_password          = "MyUdacityPassword"
-  vpc_security_group_ids   = [aws_security_group.db_sg_1.id]
+  vpc_security_group_ids   = [aws_security_group.rds_sg1.id] 
   db_subnet_group_name     = aws_db_subnet_group.udacity_db_subnet_group.name
+  #vpc_security_group_ids = var.vpc_security_group_ids
+  #db_subnet_group_name   = var.db_subnet_group_name
+  #db_cluster_parameter_group_name   = var.db_cluster_parameter_group_name
   engine_mode              = "provisioned"
-  engine_version           = "5.6.mysql_aurora.1.19.1" 
+  engine                 = "aurora-mysql"
+  engine_version         = "5.7.mysql_aurora.2.07.9"  
+#engine_version           = "5.6.mysql_aurora.1.19.1" 
+  #engine                 = "aurora-postgresql"
+  #engine_version         = "15.3"
+  #allocated_storage      = 20
   skip_final_snapshot      = true
   storage_encrypted        = false
+  backup_retention_period  = 5
   depends_on = [aws_rds_cluster_parameter_group.cluster_pg]
 }
 
+
+
 output "db_cluster_arn" {
+  description = "The ARN of the RDS Cluster"
   value = aws_rds_cluster.udacity_cluster.arn
 }
 
-output "db_instance_arn" {
-  value = aws_rds_cluster_instance.udacity_instance[0].arn
-}
 
 resource "aws_rds_cluster_instance" "udacity_instance" {
-  count                = 1
+  count                = 2
   identifier           = "udacity-db-instance-${count.index}"
   cluster_identifier   = aws_rds_cluster.udacity_cluster.id
-  instance_class       = "db.t2.small"
+  engine                 = "aurora-mysql"
+  instance_class       = "db.t3.medium"
+  #allocated_storage      = 20
+  availability_zone      =data.aws_availability_zones.available.names[count.index]
   db_subnet_group_name = aws_db_subnet_group.udacity_db_subnet_group.name
-}
-
-resource "aws_security_group" "db_sg_1" {
-  name   = "udacity-db-sg"
-  vpc_id =  var.vpc_id
-
-  ingress {
-    from_port   = 3306
-    protocol    = "TCP"
-    to_port     = 3306
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 3306
-    protocol    = "TCP"
-    to_port     = 3306
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  #parameter_group_name = "default.aurora-mysql5.7"
 }
