@@ -1,7 +1,8 @@
 terraform {
    backend "s3" {
      bucket = "udacity-tf-shine"
-     key    = "terraform/terraform.tfstate"
+     key    = "global/s3/terraform.tfstate"
+     #key    = "terraform/terraform.tfstate"
      region = "us-east-2"
    }
  }
