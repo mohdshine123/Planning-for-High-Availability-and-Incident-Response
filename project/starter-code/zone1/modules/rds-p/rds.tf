@@ -10,38 +10,16 @@
 #   skip_final_snapshot  = true
 # }
 
+#resource "aws_db_parameter_group" "education" {
+  #name   = "education"
+ # family = "es15"
+  #family ="aurora-mysql5.7"
 
-resource "aws_db_subnet_group" "udacity_db_subnet_group" {
-  name       = "udacity_db_subnet_group"
-  subnet_ids = module.vpc.public_subnets
-
-  tags = {
-    Name = "udacity_db_subnet_group"
-  }
-}
-
-resource "aws_security_group" "rds_sg1" {
-  name   = "education_rds1"
-  vpc_id = module.vpc.vpc_id
-
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "education_rds1"
-  }
-}
+  #parameter {
+   # name  = "log_connections"
+   # value = "1"
+ # }
+#}
 
 resource "aws_rds_cluster_parameter_group" "cluster_pg" {
   name   = "udacity-pg-p"
@@ -61,17 +39,14 @@ resource "aws_rds_cluster_parameter_group" "cluster_pg" {
   }
 }
 
+resource "aws_db_subnet_group" "udacity_db_subnet_group" {
+  name       = "udacity_db_subnet_group"
+  subnet_ids = var.private_subnet_ids
 
-resource "aws_db_parameter_group" "education" {
-  name   = "education"
- # family = "es15"
-  family ="aurora-mysql5.7"
-
-  #parameter {
-   # name  = "log_connections"
-   # value = "1"
- # }
 }
+
+
+
 
 resource "aws_rds_cluster" "udacity_cluster" {
   cluster_identifier       = "udacity-db-cluster"
@@ -97,7 +72,6 @@ resource "aws_rds_cluster" "udacity_cluster" {
   backup_retention_period  = 5
   depends_on = [aws_rds_cluster_parameter_group.cluster_pg]
 }
-
 
 
 output "db_cluster_arn" {
