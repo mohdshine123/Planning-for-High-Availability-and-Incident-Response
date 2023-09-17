@@ -1,4 +1,5 @@
 variable primary_db_cluster_arn {}
+data "aws_availability_zones" "available" {}
 
 resource "aws_rds_cluster_parameter_group" "cluster_pg" {
   name   = "udacity-pg-s"
