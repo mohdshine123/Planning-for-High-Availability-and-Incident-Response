@@ -91,3 +91,22 @@ resource "aws_rds_cluster_instance" "udacity_instance" {
   db_subnet_group_name = aws_db_subnet_group.udacity_db_subnet_group.name
   #parameter_group_name = "default.aurora-mysql5.7"
 }
+
+resource "aws_security_group" "db_sg_1" {
+  name   = "udacity-db-sg"
+  vpc_id =  var.vpc_id
+
+  ingress {
+    from_port   = 3306
+    protocol    = "TCP"
+    to_port     = 3306
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 3306
+    protocol    = "TCP"
+    to_port     = 3306
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
