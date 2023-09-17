@@ -84,7 +84,7 @@ resource "aws_rds_cluster_instance" "udacity_instance" {
   count                = 2
   identifier           = "udacity-db-instance-${count.index}"
   cluster_identifier   = aws_rds_cluster.udacity_cluster.id
-  engine                 = "aurora-mysql"
+  #engine                 = "aurora-mysql"
   instance_class       = "db.t3.medium"
   #allocated_storage      = 20
   availability_zone      =data.aws_availability_zones.available.names[count.index]
